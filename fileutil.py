@@ -44,3 +44,47 @@ def get_file_lines(filename):
         except UnicodeDecodeError:
             return -1
     return i + 1
+
+
+def extract_file(fname, dirs):
+    """
+
+    :param fname: file to be extracted
+    :param dirs: extract file to where
+    :return:
+    """
+    if fname.endswith('.tar') or fname.endswith('.tar.gz') or fname.endswith('.tar.bz2') or fname.endswith(
+            '.tar.xz'):
+        logging.info("begin to extract tar file %s", fname)
+        import tarfile
+        t = tarfile.open(fname)
+        t.extractall(path = dirs)
+        t.close()
+        logging.info("end to extract tar file %s", fname)
+    elif fname.endswith('.zip'):
+        logging.info("begin to extract zip file %s", fname)
+        import zipfile
+        with zipfile.ZipFile(fname) as z:
+            z.extractall(path = dirs)
+            z.close()
+        logging.info("end to extract zip file %s", fname)
+    else:
+        logging.warning("Something goes wrong! It shouldn't be here!")
+    os.remove(fname)
+
+def package_result(file_path, file_format, result_file):
+    """
+    :param file_path: directory to be packaged
+    :param file_format: which file format need to be packaged into result_file.tar.gz
+    :param result_file: package file, result_file.tar.gz
+    :return: how many files has been packaged
+    """
+    file_num = 0
+    with tarfile.open(result_file, "w:gz") as tar:
+        for root, dirs, files in os.walk(file_path):
+            for file in files:
+                if file.endswith(file_format) and os.path.join(root, file) != result_file and file != result_file:
+                    logging.debug("file %s add to %s", file, result_file)
+                    file_num += 1
+                    tar.add(os.path.join(root, file))
+    return file_num
